@@ -1,0 +1,275 @@
+default:
+  image: node:22-alpine
+
+variables:
+  PNPM_VERSION: "9.0.0"
+  # Set in GitLab CI/CD Settings → Variables:
+  #   GITLAB_TOKEN    → token con write_repository (para que semantic-release pueda commitear)
+  #   DOCKER_REGISTRY → ej. registry.gitlab.com/org/repo
+
+# ─────────────────────────────────────────────
+# Cache compartido por pnpm-lock.yaml
+# ─────────────────────────────────────────────
+.pnpm-cache: &pnpm-cache
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store
+
+.setup: &setup
+  before_script:
+    - corepack enable
+    - corepack prepare pnpm@${PNPM_VERSION} --activate
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+
+# ─────────────────────────────────────────────
+# Stages
+#
+#  feat/* / fix/* / chore/*  →  lint → build → test   (sin release)
+#  develop  →  lint → build → test → release (1.2.3-beta.1)
+#  main     →  lint → build → test → release (1.2.3)
+# ─────────────────────────────────────────────
+stages:
+  - lint
+  - build
+  - test
+  - release
+
+# ─────────────────────────────────────────────
+# Lint  — todas las ramas + MRs
+# ─────────────────────────────────────────────
+lint:
+  stage: lint
+  <<: *pnpm-cache
+  <<: *setup
+  script:
+    - pnpm lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+commitlint:
+  stage: lint
+  <<: *pnpm-cache
+  <<: *setup
+  script:
+    # Valida todos los commits del MR contra la base
+    - pnpm exec commitlint --from $CI_MERGE_REQUEST_DIFF_BASE_SHA --to HEAD
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# ─────────────────────────────────────────────
+# Build  — todas las ramas
+# ─────────────────────────────────────────────
+build:
+  stage: build
+  <<: *pnpm-cache
+  <<: *setup
+  script:
+    - pnpm build
+  artifacts:
+    paths:
+      - apps/web/.next
+      - apps/api/dist
+    expire_in: 1 hour
+  needs: [lint]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# ─────────────────────────────────────────────
+# Build mobile: Android
+#
+# Imagen con JDK 17 + Android SDK.
+# feature/* / PRs   →  assembleDebug (sin firma, verificación rápida)
+# main / develop    →  assembleRelease + bundleRelease (firmado con keystore)
+#
+# Variables requeridas (GitLab Settings → CI/CD → Variables):
+#   ANDROID_KEYSTORE_BASE64      base64 del fichero .keystore
+#   ANDROID_KEYSTORE_PASSWORD    contraseña del keystore
+#   ANDROID_KEY_ALIAS            alias de la clave
+#   ANDROID_KEY_PASSWORD         contraseña de la clave
+# ─────────────────────────────────────────────
+build:android:
+  stage: build
+  image: reactnativecommunity/react-native-android:latest
+  <<: *pnpm-cache
+  before_script:
+    - corepack enable
+    - corepack prepare pnpm@${PNPM_VERSION} --activate
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+  script:
+    - chmod +x apps/mobile/android/gradlew
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ] || [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+        echo "Building signed release APK + AAB..."
+        echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > apps/mobile/android/app/release.keystore
+        cd apps/mobile/android
+        ./gradlew assembleRelease bundleRelease --no-daemon \
+          -Pandroid.injected.signing.store.file=$(pwd)/app/release.keystore \
+          -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
+          -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
+          -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+      else
+        echo "Building unsigned debug APK..."
+        cd apps/mobile/android
+        ./gradlew assembleDebug --no-daemon
+      fi
+  artifacts:
+    paths:
+      - apps/mobile/android/app/build/outputs/apk/
+      - apps/mobile/android/app/build/outputs/bundle/
+    expire_in: 30 days
+    when: on_success
+  needs: [lint]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - apps/mobile/**/*
+        - packages/shared/**/*
+    - if: $CI_COMMIT_BRANCH
+      changes:
+        - apps/mobile/**/*
+        - packages/shared/**/*
+
+# ─────────────────────────────────────────────
+# Build mobile: iOS
+#
+# Requiere un runner self-hosted en macOS con Xcode instalado.
+# Registrar con tag "macos": https://docs.gitlab.com/runner/register/
+#
+# Solo se ejecuta en main y develop (builds de iOS son costosas).
+#
+# Variables requeridas:
+#   IOS_CERTIFICATE_BASE64           base64 del .p12 de distribución
+#   IOS_CERTIFICATE_PASSWORD         contraseña del .p12
+#   IOS_PROVISIONING_PROFILE_BASE64  base64 del .mobileprovision
+#   APPLE_TEAM_ID                    ID del equipo en Apple Developer
+# ─────────────────────────────────────────────
+build:ios:
+  stage: build
+  tags:
+    - macos # self-hosted runner en macOS con Xcode
+  before_script:
+    - corepack enable
+    - corepack prepare pnpm@${PNPM_VERSION} --activate
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+    - cd apps/mobile/ios && bundle exec pod install && cd ../../..
+  script:
+    # Crear keychain temporal para esta ejecución
+    - security create-keychain -p "" build.keychain
+    - security default-keychain -s build.keychain
+    - security unlock-keychain -p "" build.keychain
+    - security set-keychain-settings -t 3600 build.keychain
+    # Importar certificado de distribución
+    - echo "$IOS_CERTIFICATE_BASE64" | base64 --decode > certificate.p12
+    - security import certificate.p12 -k build.keychain -P "$IOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+    - security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+    # Instalar perfil de aprovisionamiento
+    - mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+    - echo "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/mobile.mobileprovision
+    # Archivar
+    - |
+      xcodebuild archive \
+        -workspace apps/mobile/ios/mobile.xcworkspace \
+        -scheme mobile \
+        -configuration Release \
+        -destination "generic/platform=iOS" \
+        -archivePath apps/mobile/ios/mobile.xcarchive \
+        CODE_SIGN_STYLE=Manual \
+        DEVELOPMENT_TEAM="$APPLE_TEAM_ID"
+    # Determinar método de export según la rama
+    - |
+      EXPORT_METHOD="ad-hoc"
+      [ "$CI_COMMIT_BRANCH" = "main" ] && EXPORT_METHOD="app-store"
+      cat > apps/mobile/ios/ExportOptions.plist << EOF
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+        "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+        <key>method</key><string>${EXPORT_METHOD}</string>
+        <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+        <key>uploadBitcode</key><false/>
+        <key>compileBitcode</key><false/>
+      </dict>
+      </plist>
+      EOF
+    # Exportar IPA
+    - |
+      xcodebuild -exportArchive \
+        -archivePath apps/mobile/ios/mobile.xcarchive \
+        -exportPath apps/mobile/ios/output \
+        -exportOptionsPlist apps/mobile/ios/ExportOptions.plist
+    # Limpiar keychain
+    - security delete-keychain build.keychain
+  artifacts:
+    paths:
+      - apps/mobile/ios/output/*.ipa
+    expire_in: 30 days
+  needs: [lint]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - apps/mobile/**/*
+        - packages/shared/**/*
+    - if: $CI_COMMIT_BRANCH == "develop"
+      changes:
+        - apps/mobile/**/*
+        - packages/shared/**/*
+
+# ─────────────────────────────────────────────
+# Test  — todas las ramas
+# ─────────────────────────────────────────────
+test:
+  stage: test
+  <<: *pnpm-cache
+  <<: *setup
+  script:
+    - pnpm test
+  needs: [build]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# ─────────────────────────────────────────────
+# Release  — solo main y develop (si test pasa)
+#
+#  main    → tag 1.2.3     + CHANGELOG + Docker :1.2.3    + :latest
+#  develop → tag 1.2.3-beta.1 + Docker :1.2.3-beta.1 + :beta
+# ─────────────────────────────────────────────
+release:
+  stage: release
+  image: node:22
+  <<: *pnpm-cache
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq docker.io
+    - corepack enable
+    - corepack prepare pnpm@${PNPM_VERSION} --activate
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+    # Identidad git para que semantic-release pueda commitear CHANGELOG + package.json
+    - git config user.email "ci@gitlab.com"
+    - git config user.name "GitLab CI"
+    # Rewrite origin URL con token para poder hacer push
+    - git remote set-url origin "https://oauth2:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    # Login al GitLab Container Registry para subir imágenes Docker
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    # semantic-release determinará la versión a partir de los commits,
+    # actualizará package.json, generará CHANGELOG, tageará, hará build
+    # de Docker con la versión correcta y subirá las imágenes.
+    - pnpm release
+  needs: [test]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+  variables:
+    DOCKER_REGISTRY: $CI_REGISTRY_IMAGE
+    GIT_DEPTH: "0" # historial completo requerido por semantic-release
+

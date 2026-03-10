@@ -1,0 +1,49 @@
+{
+	"name": "monorepo",
+	"private": true,
+	"scripts": {
+		"setup": "pnpm install",
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"dev:web": "pnpm --filter @repo/web dev",
+		"dev:api": "pnpm --filter @repo/api dev",
+		"dev:web:api": "pnpm --filter @repo/web dev & pnpm --filter @repo/api dev",
+		"mobile:metro": "pnpm --filter @repo/mobile dev",
+		"mobile:metro:reset": "pnpm --filter @repo/mobile dev -- --reset-cache",
+		"mobile:android": "pnpm --filter @repo/mobile android -- --no-packager",
+		"mobile:ios": "pnpm --filter @repo/mobile ios -- --no-packager",
+		"lint": "turbo run lint",
+		"test": "turbo run test",
+		"clean": "turbo run clean",
+		"prepare": "husky",
+		"release": "semantic-release",
+		"build:release": "turbo run build"
+	},
+	"devDependencies": {
+		"@commitlint/cli": "^20.4.3",
+		"@commitlint/config-conventional": "^20.4.3",
+		"@semantic-release/changelog": "^6.0.3",
+		"@semantic-release/commit-analyzer": "^13.0.1",
+		"@semantic-release/exec": "^7.1.0",
+		"@semantic-release/git": "^10.0.1",
+		"@semantic-release/github": "^12.0.6",
+		"@semantic-release/release-notes-generator": "^14.1.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.3.2",
+		"semantic-release": "^25.0.3",
+		"turbo": "latest"
+	},
+	"packageManager": "pnpm@9.0.0",
+	"engines": {
+		"node": ">=18"
+	},
+	"lint-staged": {
+		"**/*.{ts,tsx,js,jsx}": [
+			"eslint --fix",
+			"prettier --write"
+		],
+		"**/*.{json,md,yaml,yml}": [
+			"prettier --write"
+		]
+	}
+}

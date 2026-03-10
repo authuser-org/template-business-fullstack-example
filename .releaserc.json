@@ -1,0 +1,63 @@
+{
+	"branches": [
+		{
+			"name": "main",
+			"channel": "latest"
+		},
+		{
+			"name": "develop",
+			"prerelease": "beta",
+			"channel": "beta"
+		}
+	],
+	"plugins": [
+		[
+			"@semantic-release/commit-analyzer",
+			{
+				"preset": "conventionalcommits",
+				"releaseRules": [
+					{ "type": "feat", "release": "minor" },
+					{ "type": "fix", "release": "patch" },
+					{ "type": "perf", "release": "patch" },
+					{ "type": "refactor", "release": "patch" },
+					{ "type": "docs", "release": false },
+					{ "type": "style", "release": false },
+					{ "type": "test", "release": false },
+					{ "type": "ci", "release": false },
+					{ "type": "chore", "release": false },
+					{ "breaking": true, "release": "major" }
+				]
+			}
+		],
+		[
+			"@semantic-release/release-notes-generator",
+			{
+				"preset": "conventionalcommits",
+				"presetConfig": {
+					"types": [
+						{ "type": "feat", "section": "✨ Features" },
+						{ "type": "fix", "section": "🐛 Bug Fixes" },
+						{ "type": "perf", "section": "⚡ Performance" },
+						{ "type": "refactor", "section": "♻️ Refactor" },
+						{ "type": "docs", "section": "📚 Docs", "hidden": true },
+						{ "type": "chore", "section": "🔧 Chores", "hidden": true },
+						{ "type": "ci", "section": "👷 CI", "hidden": true }
+					]
+				}
+			}
+		],
+		[
+			"@semantic-release/exec",
+			{
+				"publishCmd": "pnpm build:release && node scripts/docker-publish.mjs ${nextRelease.version}"
+			}
+		],
+		[
+			"@semantic-release/github",
+			{
+				"failComment": false,
+				"labels": []
+			}
+		]
+	]
+}

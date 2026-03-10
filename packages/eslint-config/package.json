@@ -1,0 +1,15 @@
+{
+  "name": "@repo/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "exports": {
+    "./base": "./base.js",
+    "./next-js": "./next-js.js",
+    "./nest-js": "./nest-js.js",
+    "./react-native": "./react-native.js"
+  },
+  "peerDependencies": {
+    "eslint": ">=8"
+  }
+}

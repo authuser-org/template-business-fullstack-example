@@ -1,0 +1,67 @@
+version: 2
+updates:
+  # Dependencias npm del monorepo completo
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Madrid"
+    open-pull-requests-limit: 10
+    # Agrupar dependencias para reducir el ruido de PRs
+    groups:
+      typescript:
+        patterns:
+          - "typescript"
+          - "@types/*"
+      eslint:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "@typescript-eslint/*"
+      testing:
+        patterns:
+          - "vitest*"
+          - "@vitest/*"
+          - "jest*"
+          - "@jest/*"
+          - "@testing-library/*"
+      nestjs:
+        patterns:
+          - "@nestjs/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "react-native"
+          - "@types/react*"
+      nextjs:
+        patterns:
+          - "next"
+      build-tools:
+        patterns:
+          - "turbo*"
+          - "husky*"
+          - "lint-staged*"
+          - "commitlint*"
+          - "@commitlint/*"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+
+  # Acciones de GitHub (workflows)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"

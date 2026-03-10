@@ -1,0 +1,35 @@
+# CODEOWNERS — define quién puede aprobar cambios en cada parte del monorepo
+
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Regla global: los tech leads revisan cualquier cosa no cubierta por reglas específicas
+
+-                           @team-leads
+
+# Apps
+
+apps/web/ @team-web
+apps/api/ @team-api
+apps/mobile/ @team-mobile
+
+# Paquetes compartidos — requieren aprobación de tech leads
+
+packages/ @team-leads
+
+# CI/CD y configuración de build
+
+.github/ @team-leads
+.gitlab-ci.yml @team-leads
+turbo.json @team-leads
+pnpm-workspace.yaml @team-leads
+docker-compose.yml @team-leads
+
+# Infraestructura y datos
+
+infra/database/ @team-database @team-leads
+infra/devops/ @team-devops @team-leads
+
+# Documentación — cualquiera puede aprobar
+
+\*.md @team-leads @team-web @team-api @team-mobile
+docs/ @team-leads @team-web @team-api @team-mobile

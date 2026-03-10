@@ -1,0 +1,233 @@
+name: Mobile
+
+# Ejecuta solo cuando hay cambios en la app mobile o en paquetes compartidos.
+# feature/* / fix/*  →  APK debug (sin firma) — validar que compila
+# main / develop     →  APK + AAB firmados  +  IPA firmado
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+    branches: [main, develop]
+  push:
+    branches: ['feat/**', 'fix/**', 'chore/**']
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/shared/**'
+      - 'packages/typescript-config/**'
+      - 'pnpm-lock.yaml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/shared/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ANDROID
+# Runner: ubuntu-latest (puede compilar Gradle sin coste de macOS)
+#
+# Feature branches / PRs  →  assembleDebug   (sin firma, validación rápida)
+# main / develop          →  assembleRelease + bundleRelease (firma con keystore)
+# ─────────────────────────────────────────────────────────────────────────────
+jobs:
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Gradle cache (ahorra ~2 min por ejecución)
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('apps/mobile/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      # ── Feature branches / PRs: build de verificación (sin firma) ──────────
+      - name: Build APK debug
+        if: github.event_name != 'workflow_run'
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK debug
+        if: github.event_name != 'workflow_run'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-${{ github.sha }}
+          path: apps/mobile/android/app/build/outputs/apk/debug/*.apk
+          retention-days: 7
+
+      # ── main / develop: build de release firmado ───────────────────────────
+      - name: Decode keystore
+        if: github.event_name == 'workflow_run'
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode \
+            > apps/mobile/android/app/release.keystore
+
+      - name: Build APK + AAB release (signed)
+        if: github.event_name == 'workflow_run'
+        working-directory: apps/mobile/android
+        run: |
+          ./gradlew assembleRelease bundleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file=$(pwd)/app/release.keystore \
+            -Pandroid.injected.signing.store.password="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            -Pandroid.injected.signing.key.password="${{ secrets.ANDROID_KEY_PASSWORD }}"
+
+      - name: Upload APK release
+        if: github.event_name == 'workflow_run'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-${{ github.sha }}
+          path: apps/mobile/android/app/build/outputs/apk/release/*.apk
+          retention-days: 30
+
+      - name: Upload AAB (Play Store)
+        if: github.event_name == 'workflow_run'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab-${{ github.sha }}
+          path: apps/mobile/android/app/build/outputs/bundle/release/*.aab
+          retention-days: 30
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # iOS
+  # Runner: macos-14 (Apple Silicon, Xcode 16)
+  # Solo en main/develop — las builds de iOS son costosas (~15 min)
+  # ─────────────────────────────────────────────────────────────────────────────
+  ios:
+    name: iOS
+    runs-on: macos-14
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Ruby con las versiones fijadas en Gemfile (CocoaPods, etc.)
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: apps/mobile
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Pods cache (ahorra ~5 min)
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: apps/mobile/ios/Pods
+          key: pods-${{ runner.os }}-${{ hashFiles('apps/mobile/ios/Podfile.lock') }}
+          restore-keys: pods-${{ runner.os }}-
+
+      - name: Install CocoaPods
+        working-directory: apps/mobile/ios
+        run: bundle exec pod install
+
+      # ── Importar certificado de distribución (.p12) ──────────────────────
+      - name: Import distribution certificate
+        run: |
+          # Crear un keychain temporal solo para esta ejecución
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-keychain-settings -t 3600 build.keychain
+
+          echo "${{ secrets.IOS_CERTIFICATE_BASE64 }}" | base64 --decode > certificate.p12
+          security import certificate.p12 \
+            -k build.keychain \
+            -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+
+      # ── Instalar perfil de aprovisionamiento ────────────────────────────
+      - name: Install provisioning profile
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode \
+            > ~/Library/MobileDevice/Provisioning\ Profiles/mobile.mobileprovision
+
+      # ── Archivar la app ─────────────────────────────────────────────────
+      - name: Archive
+        working-directory: apps/mobile
+        run: |
+          xcodebuild archive \
+            -workspace ios/mobile.xcworkspace \
+            -scheme mobile \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath ios/mobile.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            | xcpretty --color
+
+      # ── Exportar IPA ────────────────────────────────────────────────────
+      - name: Export IPA
+        working-directory: apps/mobile
+        run: |
+          cat > ios/ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>${{ github.event.workflow_run.head_branch == 'main' && 'app-store' || 'ad-hoc' }}</string>
+            <key>teamID</key>
+            <string>${{ secrets.APPLE_TEAM_ID }}</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath ios/mobile.xcarchive \
+            -exportPath ios/output \
+            -exportOptionsPlist ios/ExportOptions.plist \
+            | xcpretty --color
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa-${{ github.sha }}
+          path: apps/mobile/ios/output/*.ipa
+          retention-days: 30

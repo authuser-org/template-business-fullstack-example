@@ -1,0 +1,32 @@
+# docker-compose.override.yml — entorno de DESARROLLO LOCAL
+#
+# Este fichero se aplica automáticamente sobre docker-compose.yml cuando
+# ejecutas `docker compose up` en local.
+# En CI/CD solo se usa docker-compose.yml (producción).
+
+services:
+  web:
+    build:
+      target: deps          # Stage de dependencias — solo instala, no compila
+    volumes:
+      - ./apps/web:/app/apps/web
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+    command: sh -c "pnpm --filter @repo/web dev"
+
+  api:
+    build:
+      target: deps
+    volumes:
+      - ./apps/api:/app/apps/api
+      - /app/apps/api/node_modules
+      - /app/apps/api/dist
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - JWT_SECRET=dev_secret_change_in_production
+      - CORS_ORIGINS=http://localhost:3000
+    command: sh -c "pnpm --filter @repo/api dev"

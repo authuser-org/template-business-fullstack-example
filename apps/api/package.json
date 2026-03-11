@@ -24,6 +24,7 @@
 	},
 	"dependencies": {
 		"@authuser/nest-fastify-kit": "^0.1.8",
+		"@fastify/static": "^9.0.0",
 		"@nestjs/common": "^11.0.1",
 		"@nestjs/config": "^4.0.3",
 		"@nestjs/core": "^11.0.1",
@@ -73,7 +74,8 @@
 			"^.+\\.(t|j)s$": "ts-jest"
 		},
 		"moduleNameMapper": {
-			"^@repo/shared$": "<rootDir>/../../../packages/shared/src/index.ts"
+			"^@repo/shared$": "<rootDir>/../../../packages/shared/src/index.ts",
+			"^@repo/shared/mocks$": "<rootDir>/../../../packages/shared/src/mocks/index.ts"
 		},
 		"passWithNoTests": true,
 		"collectCoverageFrom": [

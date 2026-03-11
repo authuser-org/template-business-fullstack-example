@@ -9,6 +9,10 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
+		},
+		"./mocks": {
+			"types": "./dist/mocks/index.d.ts",
+			"default": "./dist/mocks/index.js"
 		}
 	},
 	"scripts": {

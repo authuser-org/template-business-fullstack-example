@@ -11,6 +11,9 @@ export default tseslint.config(
 	{
 		files: ['**/*.ts'],
 		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
 			globals: {
 				...globals.node,
 				describe: 'readonly',

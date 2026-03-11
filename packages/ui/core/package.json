@@ -1,0 +1,30 @@
+{
+	"name": "@repo/ui-core",
+	"version": "0.0.0",
+	"private": true,
+	"license": "MIT",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./styles.css": "./styles.css",
+		"./tailwind-theme.css": "./tailwind-theme.css"
+	},
+	"scripts": {
+		"build": "tsc --build --force",
+		"dev": "tsc --build --watch",
+		"lint": "eslint src/",
+		"clean": "rm -rf dist tsconfig.tsbuildinfo"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.18.0",
+		"@repo/typescript-config": "workspace:*",
+		"eslint": "^10.0.3",
+		"globals": "^16.0.0",
+		"typescript": "^5.7.3",
+		"typescript-eslint": "^8.20.0"
+	}
+}

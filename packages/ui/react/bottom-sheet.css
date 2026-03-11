@@ -1,0 +1,58 @@
+.ui-bottom-sheet-root {
+	position: fixed;
+	inset: 0;
+	z-index: 60;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.ui-bottom-sheet-root[data-state='closed'] {
+	pointer-events: none;
+}
+
+.ui-bottom-sheet-backdrop {
+	position: absolute;
+	inset: 0;
+	border: 0;
+	background: rgb(0 0 0 / 0.5);
+	padding: 0;
+	margin: 0;
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity 220ms ease;
+}
+
+.ui-bottom-sheet-panel {
+	position: relative;
+	width: min(960px, 100%);
+	overflow: auto;
+	border-top-left-radius: 16px;
+	border-top-right-radius: 16px;
+	border: 1px solid var(--ui-color-surface-border);
+	background: var(--ui-color-surface-background);
+	box-shadow: var(--ui-shadow-lg);
+	will-change: transform, opacity;
+	opacity: 0;
+	transform: translateY(36px);
+	transition:
+		transform 220ms ease,
+		opacity 220ms ease;
+}
+
+.ui-bottom-sheet-handle {
+	margin: 10px auto 0;
+	height: 4px;
+	width: 56px;
+	border-radius: 999px;
+	background: var(--ui-color-surface-border);
+}
+
+.ui-bottom-sheet-root[data-state='open'] .ui-bottom-sheet-backdrop {
+	opacity: 1;
+}
+
+.ui-bottom-sheet-root[data-state='open'] .ui-bottom-sheet-panel {
+	opacity: 1;
+	transform: translateY(0);
+}

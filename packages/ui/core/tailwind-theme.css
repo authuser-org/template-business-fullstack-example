@@ -1,0 +1,20 @@
+@theme inline {
+	--color-brand-50: var(--ui-color-brand-50);
+	--color-brand-100: var(--ui-color-brand-100);
+	--color-brand-500: var(--ui-color-brand-500);
+	--color-brand-600: var(--ui-color-brand-600);
+	--color-brand-700: var(--ui-color-brand-700);
+	--color-surface-background: var(--ui-color-surface-background);
+	--color-surface-foreground: var(--ui-color-surface-foreground);
+	--color-surface-muted: var(--ui-color-surface-muted);
+	--color-surface-border: var(--ui-color-surface-border);
+	--radius-sm: var(--ui-radius-sm);
+	--radius-md: var(--ui-radius-md);
+	--radius-lg: var(--ui-radius-lg);
+	--radius-xl: var(--ui-radius-xl);
+	--shadow-sm: var(--ui-shadow-sm);
+	--shadow-md: var(--ui-shadow-md);
+	--shadow-lg: var(--ui-shadow-lg);
+	--breakpoint-tv: var(--ui-breakpoint-tv);
+	--breakpoint-tv4k: var(--ui-breakpoint-tv4k);
+}

@@ -1,0 +1,24 @@
+:root {
+	--ui-color-brand-50: #f4f8ff;
+	--ui-color-brand-100: #e5efff;
+	--ui-color-brand-500: #2f6df6;
+	--ui-color-brand-600: #1f59d5;
+	--ui-color-brand-700: #1746ab;
+
+	--ui-color-surface-background: #ffffff;
+	--ui-color-surface-foreground: #171717;
+	--ui-color-surface-muted: #f4f4f5;
+	--ui-color-surface-border: #e4e4e7;
+
+	--ui-radius-sm: 0.375rem;
+	--ui-radius-md: 0.5rem;
+	--ui-radius-lg: 0.75rem;
+	--ui-radius-xl: 1rem;
+
+	--ui-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+	--ui-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+	--ui-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+
+	--ui-breakpoint-tv: 1920px;
+	--ui-breakpoint-tv4k: 2560px;
+}

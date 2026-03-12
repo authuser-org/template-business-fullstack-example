@@ -5,7 +5,7 @@ import { Button } from '../button';
 
 const MODAL_ANIMATION_MS = 200;
 const MODAL_ENTER_DELAY_MS = 16;
-const SCROLL_UNLOCK_DELAY_MS = 300;
+const SCROLL_UNLOCK_DELAY_MS = 0;
 let modalScrollLocks = 0;
 let previousBodyOverflow = '';
 let bodyUnlockTimeout: number | undefined;

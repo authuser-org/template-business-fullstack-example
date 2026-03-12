@@ -199,7 +199,7 @@ export function RowHeroCarousel({
 				'relative w-full overflow-hidden h-[70vh] min-h-162.5',
 				className ?? '',
 			].join(' ')}
-			style={{ scrollbarGutter: 'stable' }}
+			style={modalItem ? { scrollbarGutter: 'stable' } : undefined}
 		>
 			<Swiper
 				modules={modules}

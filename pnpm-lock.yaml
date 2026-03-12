@@ -127,8 +127,8 @@ importers:
         specifier: ^5.2.2
         version: 5.5.5(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1))(prettier@3.8.1)
       globals:
-        specifier: ^16.0.0
-        version: 16.4.0
+        specifier: ^17.4.0
+        version: 17.4.0
       jest:
         specifier: ^30.0.0
         version: 30.2.0(@types/node@22.19.15)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.15))(@types/node@22.19.15)(typescript@5.9.3))
@@ -351,8 +351,8 @@ importers:
         specifier: ^10.0.3
         version: 10.0.3(jiti@2.6.1)
       globals:
-        specifier: ^16.0.0
-        version: 16.4.0
+        specifier: ^17.4.0
+        version: 17.4.0
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
@@ -377,8 +377,8 @@ importers:
         specifier: ^10.0.3
         version: 10.0.3(jiti@2.6.1)
       globals:
-        specifier: ^16.0.0
-        version: 16.4.0
+        specifier: ^17.4.0
+        version: 17.4.0
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
@@ -432,8 +432,8 @@ importers:
         specifier: ^10.0.3
         version: 10.0.3(jiti@2.6.1)
       globals:
-        specifier: ^16.0.0
-        version: 16.4.0
+        specifier: ^17.4.0
+        version: 17.4.0
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0(@noble/hashes@1.8.0)
@@ -481,8 +481,8 @@ importers:
         specifier: ^10.0.3
         version: 10.0.3(jiti@2.6.1)
       globals:
-        specifier: ^16.0.0
-        version: 16.4.0
+        specifier: ^17.4.0
+        version: 17.4.0
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -5336,6 +5336,10 @@ packages:
 
   globals@16.4.0:
     resolution: {integrity: sha512-ob/2LcVVaVGCYN+r14cnwnoDPUufjiYgSqRhiFD0Q1iI4Odora5RE8Iv1D24hAz5oMophRGkGz+yuvQmmUMnMw==}
+    engines: {node: '>=18'}
+
+  globals@17.4.0:
+    resolution: {integrity: sha512-hjrNztw/VajQwOLsMNT1cbJiH2muO3OROCHnbehc8eY5JyD2gqz4AcMHPqgaOR59DjgUjYAYLeH699g/eWi2jw==}
     engines: {node: '>=18'}
 
   globalthis@1.0.4:
@@ -14629,6 +14633,8 @@ snapshots:
   globals@14.0.0: {}
 
   globals@16.4.0: {}
+
+  globals@17.4.0: {}
 
   globalthis@1.0.4:
     dependencies:

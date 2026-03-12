@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-const BOTTOM_SHEET_ANIMATION_MS = 200;
+const BOTTOM_SHEET_ANIMATION_MS = 280;
 const BOTTOM_SHEET_ENTER_DELAY_MS = 16;
 
 export type BottomSheetProps = {

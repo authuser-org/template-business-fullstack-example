@@ -5,6 +5,10 @@ import { Button } from '../button';
 
 const MODAL_ANIMATION_MS = 200;
 const MODAL_ENTER_DELAY_MS = 16;
+const SCROLL_UNLOCK_DELAY_MS = 300;
+let modalScrollLocks = 0;
+let previousBodyOverflow = '';
+let bodyUnlockTimeout: number | undefined;
 
 export type ModalProps = {
 	open: boolean;
@@ -69,6 +73,33 @@ export function Modal({ open, onOpenChange, children, title }: ModalProps) {
 		window.addEventListener('keydown', handleEscape);
 		return () => window.removeEventListener('keydown', handleEscape);
 	}, [open, onOpenChange]);
+
+	useEffect(() => {
+		if (!open || !mounted) {
+			return;
+		}
+
+		if (bodyUnlockTimeout !== undefined) {
+			window.clearTimeout(bodyUnlockTimeout);
+			bodyUnlockTimeout = undefined;
+		}
+
+		if (modalScrollLocks === 0) {
+			previousBodyOverflow = document.body.style.overflow;
+			document.body.style.overflow = 'hidden';
+		}
+		modalScrollLocks += 1;
+
+		return () => {
+			modalScrollLocks = Math.max(0, modalScrollLocks - 1);
+			if (modalScrollLocks === 0) {
+				bodyUnlockTimeout = window.setTimeout(() => {
+					document.body.style.overflow = previousBodyOverflow;
+					bodyUnlockTimeout = undefined;
+				}, SCROLL_UNLOCK_DELAY_MS);
+			}
+		};
+	}, [open, mounted]);
 
 	if (!mounted || !rendered) {
 		return null;

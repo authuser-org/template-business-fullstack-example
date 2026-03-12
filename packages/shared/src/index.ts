@@ -6,8 +6,8 @@ export type {
 	PaginatedResult,
 	User,
 	UserProfile,
-	WatchlistItem,
 	WatchProgress,
+	WatchlistItem,
 } from './types/user/index';
 export type { ProfileParentalControl } from './types/user/parental';
 
@@ -182,6 +182,14 @@ export type {
 } from './types/api/video-endpoints';
 
 // Tipos auxiliares de plataforma
+export {
+	SHARED_I18N_MESSAGES,
+	SUPPORTED_LOCALES,
+	getSharedMessages,
+	isSupportedLocale,
+	resolveLocale,
+} from './i18n/messages';
+export type { AppLocale } from './i18n/messages';
 export type {
 	ContractVersion,
 	VersionedPayload,

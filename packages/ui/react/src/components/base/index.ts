@@ -7,6 +7,7 @@ export * from './modal';
 export * from './navigation';
 export * from './ott';
 export * from './progress';
+export * from './select';
 export * from './skeleton';
 export * from './text-input';
 export * from './toast-notification';

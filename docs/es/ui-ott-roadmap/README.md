@@ -2,7 +2,7 @@
 
 Checklist práctico para implementar después, por fases, en el sistema UI compartido.
 
-Última actualización: 11-03-2026 (Fase 3 ✅ - ContentDetail, VideoPlayer, Watch Experience iniciado)
+ Última actualización: 11-03-2026 (Fase 5 ✅ - Estados + acceso funcionales + test coverage com​pleto)
 
 ## Cómo usar este documento
 
@@ -184,8 +184,8 @@ Checklist práctico para implementar después, por fases, en el sistema UI compa
 
 ### User Account
 
-- ⚠️ UserAvatar (Both)
-- ⚠️ UserProfileCard (Both)
+- ✅ UserAvatar (Both)
+- ✅ UserProfileCard (Both)
 - ⚠️ ProfileSelector (Both)
 - ⚠️ ProfileManager (Both)
 - ⚠️ AccountSettings (Both)
@@ -196,8 +196,8 @@ Checklist práctico para implementar después, por fases, en el sistema UI compa
 
 ### Engagement / Social
 
-- ⚠️ LikeButton (Both)
-- ⚠️ FavoriteButton (Both)
+- ✅ LikeButton (Both)
+- ✅ FavoriteButton (Both)
 - ⚠️ WatchlistButton (Both)
 - ⚠️ ShareButton (Both)
 - ⚠️ CommentSection (Both)
@@ -207,7 +207,7 @@ Checklist práctico para implementar después, por fases, en el sistema UI compa
 
 ### Search & Discovery
 
-- ⚠️ SearchInput (Both)
+- ✅ SearchInput (Both)
 - ⚠️ SearchSuggestions (Both)
 - ⚠️ SearchFilters (Both)
 - ⚠️ SearchResultsGrid (Both)
@@ -216,15 +216,15 @@ Checklist práctico para implementar después, por fases, en el sistema UI compa
 
 ### Notifications
 
-- ⚠️ NotificationBell (Both)
+- ✅ NotificationBell (Both)
 - ⚠️ NotificationList (Both)
-- ⚠️ NotificationItem (Both)
+- ✅ NotificationItem (Both)
 - ✅ ToastNotification (Both)
 - ⚠️ SystemAlert (Both)
 
 ### Ads (AVOD)
 
-- ⚠️ AdPlayer (Both)
+- ✅ AdPlayer (Both)
 - ⚠️ AdOverlay (Both)
 - ⚠️ AdCountdown (Both)
 - ⚠️ AdBanner (Web)
@@ -236,23 +236,23 @@ Checklist práctico para implementar después, por fases, en el sistema UI compa
 
 ### Loading / UI States
 
-- ⚠️ SkeletonCard (Both)
-- ⚠️ SkeletonRow (Both)
-- ⚠️ LoadingSpinner (Both)
-- ⚠️ EmptyState (Both)
-- ⚠️ ErrorState (Both)
-- ⚠️ OfflineState (Both)
+- ✅ SkeletonCard (Both)
+- ✅ SkeletonRow (Both)
+- ✅ LoadingSpinner (Both)
+- ✅ EmptyState (Both)
+- ✅ ErrorState (Both)
+- ✅ OfflineState (Both)
 
 ### Auth / Access
 
-- ⚠️ LoginForm (Both)
-- ⚠️ RegisterForm (Both)
-- ⚠️ AuthModal (Web)
-- ⚠️ ForgotPasswordForm (Both)
-- ⚠️ AccessGate (Both)
-- ⚠️ AgeVerificationGate (Both)
-- ⚠️ GeoRestrictionGate (Both)
-- ⚠️ SubscriptionGate (Both)
+- ✅ LoginForm (Both)
+- ✅ RegisterForm (Both)
+- ✅ AuthModal (Both)
+- ✅ ForgotPasswordForm (Both)
+- ✅ AccessGate (Both)
+- ✅ AgeVerificationGate (Both)
+- ✅ GeoRestrictionGate (Both)
+- ✅ SubscriptionGate (Both)
 
 ---
 
